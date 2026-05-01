@@ -1,0 +1,75 @@
+﻿
+
+现在，我们把代码任务切分到最细：
+
+👾 阶段 0：点亮世界（Hello Window）
+任务 1： 包含 <SFML/Graphics.hpp>。
+
+任务 2： 在 main 函数中创建一个 sf::RenderWindow（比如 800x600 尺寸）。
+
+任务 3： 写一个 while (window.isOpen()) 的游戏主循环。
+
+任务 4： 在循环内处理 sf::Event::Closed 事件，确保点右上角的 'X' 能关掉窗口。
+
+目标： 成功编译，弹出一个纯黑色的稳定窗口。
+
+👾 阶段 1：万物起源（ECS 架构雏形与多态初体验）
+任务 1： 创建一个基类 Entity。
+
+包含坐标 x, y（可以用 sf::Vector2f）。
+
+包含纯虚函数 virtual void update(float deltaTime) = 0; 和 virtual void draw(sf::RenderWindow& window) = 0;。
+
+关键： 记得写虚析构函数 virtual ~Entity() = default;！
+
+任务 2： 准备一个 std::vector<std::unique_ptr<Entity>> entities; 来管理所有游戏对象。
+
+👾 阶段 2：主角登场（Player 类与输入）
+任务 1： 创建 Player 类继承 Entity。
+
+任务 2： 在 Player 中添加一个 sf::RectangleShape 或 sf::CircleShape 作为占位符（等以后再换成角色立绘）。
+
+任务 3： 在 update 函数中，使用 sf::Keyboard::isKeyPressed() 获取 WASD 或方向键的输入，改变坐标。
+ 颠倒的 Y 轴：
+在数学课本上，原点 $(0,0)$ 在左下角，Y 轴向上是正。
+但在计算机图形学（SFML）里，屏幕的左上角才是原点 $(0,0)$。X 轴向右是正，Y 轴向下是正！
+所以，按下 W 键（向上走），你的 Y 坐标应该 减小（direction.y -= 1.0f）。
+
+任务 4： 加入边界检测，防止主角飞出 800x600 的窗口。
+
+👾 阶段 3：全军出击（子弹类与 STL 删除陷阱）
+
+默认沿着x轴向正前方发射子弹（小弹幕）
+给一个交互按键J，可以发射鱼类（更高伤害的弹幕）
+给一个交互案件K，可以呼叫航母支援（闪烁出来另一个角色的图片，然后消失。期间屏幕上有飞机图标飞过，造成全屏伤害）
+任务 1： 创建 Bullet 类继承 Entity。赋予它一个向上的初始速度。
+
+任务 2： 在 Player 中检测“空格键”按下，按一次就在主角当前位置 new 一个 Bullet，塞进 entities 列表里。
+
+任务 3： 💥大难点：内存管理！
+
+如果子弹飞出屏幕最上方，必须把它销毁，否则几分钟后内存就爆了。
+
+练习使用 STL 的 std::remove_if 或迭代器遍历删除（这是经典的 C++ 面试题）。
+
+👾 阶段 4：深海舰队（敌人生成与随机数）
+任务 1： 创建 Enemy 类继承 Entity，让它以一定速度从屏幕顶端往下飞。
+
+任务 2： 写一个定时器或帧计数器，每隔两秒在屏幕顶端随机 X 坐标生成一个 Enemy 并加入列表。
+
+👾 阶段 5：交火与陨落（AABB 碰撞检测）
+任务 1： 在 Entity 基类中加一个 sf::FloatRect getBounds() 函数，返回物体的包围盒。
+
+任务 2： 在主循环里写一个双重循环遍历：判断每一个 Bullet 的包围盒是否与 Enemy 的包围盒发生了相交（使用 SFML 提供的 .intersects() 方法）。
+
+任务 3： 如果相交，把这颗子弹和这个敌人同时标记为“待死亡 (isDead)”，并在该帧结束时从 entities 中清除它们。
+
+👾 阶段 6：弹幕艺术（进阶与定制，视进度而定）
+定制排序： 实现同屏渲染层级。
+
+敌方弹幕： 让敌人也发射向下飞的 Bullet（这体现了继承的好处，改个速度方向就行）。
+
+UI 与积分： 击毁敌人得分，使用 sf::Font 和 sf::Text 渲染分数。
+
+
+player血量清零后弹出gameover.png

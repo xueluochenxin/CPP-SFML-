@@ -1,0 +1,50 @@
+1 remove if 删除逻辑
+bullets.erase(
+        std::remove_if(bullets.begin(), bullets.end(),
+            [](const std::unique_ptr<Bullet>& b) {
+                return b->isOutOfScreen(); // 判断条件：越界了吗？
+            }
+        ),
+        bullets.end()
+    );
+这是删除子弹的代码 
+erase（begin，end）
+begin由removeif返回
+  质检员：Lambda 表达式 (匿名函数)
+C++
+[](const std::unique_ptr<Bullet>& b) {
+    return b->isOutOfScreen();
+}
+它是干嘛的？
+在以前的 C 语言里，如果你要传一个规则给系统，你必须跑到代码的几百行开外，专门写一个独立的函数，
+然后再把函数名（指针）传进来。这非常打断思路。
+C++11 引入了 Lambda，意思是：“我就在这里临时写一个没有名字的、一次性的小函数。”
+
+[] (捕获列表)： 它是 Lambda 的标志。意思是“我不借用外部的任何变量，我只靠你传给我的参数干活”。
+
+(const std::unique_ptr<Bullet>& b)： 这是参数。它告诉系统：“等会儿你给我检查子弹的时候，记得按引用（&）传给我，
+千万别复制它（因为 unique_ptr 不能复制）。”
+
+{ return b->isOutOfScreen(); }： 核心逻辑。这颗子弹如果出界了，返回 true（意思是：它是残次品，该被干掉）。
+
+搬运工：std::remove_if 与双指针算法
+理解 std::remove_if 的最好方式，就是把它当成一道经典的双指针（Two Pointers）算法题。
+你在刷 LeetCode 数组原地移除元素（比如 LC27 移除元素、移动零）时，脑子里想的逻辑，就是 remove_if 的底层源码。
+
+惊天大陷阱：remove_if 其实根本不 remove（删除）！
+
+假设你的弹匣里有 4 颗子弹：[好子弹A, 坏子弹B, 好子弹C, 坏子弹D]。
+
+快指针在前面跑，把每一颗子弹交给刚才的 Lambda 质检员 检查。
+
+当发现“好子弹”时，慢指针就把这颗好子弹覆盖到数组的前面去。
+
+执行完 remove_if 后，数组变成了这样：
+[好子弹A, 好子弹C, 好子弹C(残留), 坏子弹D(残留)]
+(注：前两个坑位被好子弹占满，后面的数据其实是废弃的残留值)
+
+重点来了： remove_if 执行完后，数组的长度（Size）完全没有变！
+但它会极其聪明地返回一个迭代器（指针），指向第一个垃圾数据的位置（也就是第二个 好子弹C 的位置）。
+它相当于在数组中间画了一条“垃圾分界线”。
+
+2
